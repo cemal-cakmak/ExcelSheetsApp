@@ -27,11 +27,21 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddDefaultTokenProviders();
 
 builder.Services.AddControllersWithViews();
+// Data Protection için persistent key
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo("/app/data/keys"))
+    .SetApplicationName("ExcelSheetsApp");
+
+// Session için memory cache (basit çözüm)
+builder.Services.AddDistributedMemoryCache();
+
 builder.Services.AddSession(options =>
 {
     options.Cookie.HttpOnly = true;
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.IsEssential = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 });
 
 // Add SignalR
@@ -58,10 +68,16 @@ using (var scope = app.Services.CreateScope())
     {
         // Ensure data directory exists
         var dataDir = "/app/data";
+        var keysDir = "/app/data/keys";
         if (!Directory.Exists(dataDir))
         {
             Directory.CreateDirectory(dataDir);
             Console.WriteLine($"📁 Created data directory: {dataDir}");
+        }
+        if (!Directory.Exists(keysDir))
+        {
+            Directory.CreateDirectory(keysDir);
+            Console.WriteLine($"🔐 Created keys directory: {keysDir}");
         }
         
         // Apply database migrations
