@@ -48,11 +48,36 @@ builder.Services.AddScoped<IAdminService, AdminService>();
 
 var app = builder.Build();
 
-// Seed admin user
+// Apply migrations and seed admin user
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    await SeedAdminUser(services);
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    
+    try
+    {
+        // Ensure data directory exists
+        var dataDir = "/app/data";
+        if (!Directory.Exists(dataDir))
+        {
+            Directory.CreateDirectory(dataDir);
+            Console.WriteLine($"📁 Created data directory: {dataDir}");
+        }
+        
+        // Apply database migrations
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        Console.WriteLine("🗄️ Applying database migrations...");
+        await context.Database.MigrateAsync();
+        Console.WriteLine("✅ Database migrations completed!");
+        
+        // Seed admin user
+        await SeedAdminUser(services);
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Database migration or seeding failed");
+        Console.WriteLine($"❌ Database error: {ex.Message}");
+    }
 }
 
 // Configure the HTTP request pipeline.
