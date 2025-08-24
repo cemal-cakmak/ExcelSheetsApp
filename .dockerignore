@@ -1,0 +1,14 @@
+bin/
+obj/
+.vs/
+.vscode/
+*.db
+*.db-journal
+node_modules/
+wwwroot/uploads/*
+!wwwroot/uploads/.gitkeep
+Dockerfile
+.dockerignore
+README.md
+.git/
+.gitignore

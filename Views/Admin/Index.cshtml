@@ -1,0 +1,354 @@
+@model ExcelSheetsApp.Models.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@functions {
+    string GetTimeAgo(DateTime timestamp)
+    {
+        var timeSpan = DateTime.Now - timestamp;
+        if (timeSpan.TotalMinutes < 1) return "şimdi";
+        if (timeSpan.TotalMinutes < 60) return $"{(int)timeSpan.TotalMinutes} dakika önce";
+        if (timeSpan.TotalHours < 24) return $"{(int)timeSpan.TotalHours} saat önce";
+        return $"{(int)timeSpan.TotalDays} gün önce";
+    }
+}
+
+<style>
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+    }
+</style>
+
+<!-- Welcome Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="admin-card">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #3498db, #2980b9); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-crown text-white fs-3"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="mb-1">Hoş Geldiniz, @User.Identity?.Name!</h3>
+                        <p class="text-muted mb-0">Excel Otomasyon Admin Paneline hoş geldiniz. Sistem durumunu ve istatistikleri burada takip edebilirsiniz.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ana İstatistik Kartları -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #3498db, #2980b9);">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-number">@(Model?.TotalUsers ?? 1)</div>
+            <div class="stat-label">Toplam Kullanıcı</div>
+            <small class="text-success">
+                <i class="fas fa-check-circle"></i> Aktif
+            </small>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #27ae60, #2ecc71);">
+                <i class="fas fa-file-excel"></i>
+            </div>
+            <div class="stat-number">@(Model?.TotalExcelFilesProcessed ?? 0)</div>
+            <div class="stat-label">İşlenmiş Excel</div>
+            <small class="text-success">
+                <i class="fas fa-arrow-up"></i> Toplam dosya
+            </small>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #f39c12, #e67e22);">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-number">@(Model?.AverageProcessingTime.ToString("F1") ?? "0")s</div>
+            <div class="stat-label">Ortalama İşlem Süresi</div>
+            <small class="text-info">
+                <i class="fas fa-stopwatch"></i> Saniye
+            </small>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-number">@(Model?.TodayOperations ?? 0)</div>
+            <div class="stat-label">Bugünkü İşlemler</div>
+            <small class="text-warning">
+                <i class="fas fa-calendar-day"></i> Bugün
+            </small>
+        </div>
+    </div>
+</div>
+
+<!-- Detaylı İstatistikler -->
+<div class="row mb-4">
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #17a2b8, #138496);">
+                <i class="fas fa-calendar-week"></i>
+            </div>
+            <div class="stat-number">@(Model?.ThisWeekOperations ?? 0)</div>
+            <div class="stat-label">Bu Hafta</div>
+            <small class="text-info">
+                <i class="fas fa-trending-up"></i> İşlem sayısı
+            </small>
+        </div>
+    </div>
+    
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #dc3545, #c82333);">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div class="stat-number">@(Model?.ThisMonthOperations ?? 0)</div>
+            <div class="stat-label">Bu Ay</div>
+            <small class="text-danger">
+                <i class="fas fa-chart-bar"></i> Toplam işlem
+            </small>
+        </div>
+    </div>
+    
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #28a745, #218838);">
+                <i class="fas fa-server"></i>
+            </div>
+            <div class="stat-number">@(Model?.Performance?.Uptime.Days ?? 0)d</div>
+            <div class="stat-label">Sistem Uptime</div>
+            <small class="text-success">
+                <i class="fas fa-check-circle"></i> @(Model?.SystemStatus ?? "Çevrimiçi")
+            </small>
+        </div>
+    </div>
+</div>
+
+<!-- Hızlı İşlemler -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="admin-card">
+            <div class="card-header-custom">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Hızlı İşlemler
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row">
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <a href="/Admin/Users" class="quick-action">
+                            <div class="quick-action-icon" style="background: linear-gradient(135deg, #3498db, #2980b9);">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <div class="quick-action-title">Kullanıcı Yönetimi</div>
+                            <div class="quick-action-desc">Kullanıcı ekle, düzenle, sil</div>
+                        </a>
+                    </div>
+                    
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <a href="/Admin/Statistics" class="quick-action">
+                            <div class="quick-action-icon" style="background: linear-gradient(135deg, #27ae60, #2ecc71);">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <div class="quick-action-title">İstatistikler</div>
+                            <div class="quick-action-desc">Detaylı raporları görüntüle</div>
+                        </a>
+                    </div>
+                    
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <a href="/Admin/Settings" class="quick-action">
+                            <div class="quick-action-icon" style="background: linear-gradient(135deg, #f39c12, #e67e22);">
+                                <i class="fas fa-cogs"></i>
+                            </div>
+                            <div class="quick-action-title">Sistem Ayarları</div>
+                            <div class="quick-action-desc">Uygulama ayarlarını düzenle</div>
+                        </a>
+                    </div>
+                    
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <a href="/Admin/Logs" class="quick-action">
+                            <div class="quick-action-icon" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">
+                                <i class="fas fa-list-alt"></i>
+                            </div>
+                            <div class="quick-action-title">Sistem Logları</div>
+                            <div class="quick-action-desc">Hata ve işlem logları</div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Son Aktiviteler ve Sistem Performansı -->
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="admin-card">
+            <div class="card-header-custom">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Son Aktiviteler (@Model.RecentActivities.Count)
+                </h5>
+            </div>
+            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                @if (Model.RecentActivities.Any())
+                {
+                    <div class="timeline">
+                        @foreach (var activity in Model.RecentActivities)
+                        {
+                            <div class="d-flex align-items-center mb-3 p-3 bg-light rounded position-relative">
+                                <div class="me-3">
+                                    <div class="activity-icon bg-@activity.StatusColor">
+                                        <i class="@activity.Icon text-white"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">@activity.Action</h6>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <i class="fas fa-user me-1"></i>@activity.Username
+                                            @if (!string.IsNullOrEmpty(activity.FileName))
+                                            {
+                                                <span class="mx-2">•</span>
+                                                <i class="fas fa-file me-1"></i>@activity.FileName
+                                            }
+                                        </small>
+                                        <span class="badge bg-@activity.StatusColor">@activity.Status</span>
+                                    </div>
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock me-1"></i>@activity.Timestamp.ToString("HH:mm") - @GetTimeAgo(activity.Timestamp)
+                                    </small>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-history fa-3x mb-3 opacity-50"></i>
+                        <p>Henüz aktivite bulunmuyor</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-4">
+        <div class="admin-card">
+            <div class="card-header-custom">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    Sistem Performansı
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- CPU Kullanımı -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="small">CPU Kullanımı</span>
+                        <span class="small text-muted">@Model.Performance.CpuUsage.ToString("F1")%</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-@(Model.Performance.CpuUsage > 70 ? "danger" : Model.Performance.CpuUsage > 50 ? "warning" : "success")" 
+                             style="width: @Model.Performance.CpuUsage%"></div>
+                    </div>
+                </div>
+                
+                <!-- RAM Kullanımı -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="small">RAM Kullanımı</span>
+                        <span class="small text-muted">@Model.Performance.MemoryUsage.ToString("F1")%</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-@(Model.Performance.MemoryUsage > 80 ? "danger" : Model.Performance.MemoryUsage > 60 ? "warning" : "info")" 
+                             style="width: @Model.Performance.MemoryUsage%"></div>
+                    </div>
+                </div>
+                
+                <!-- Disk Kullanımı -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="small">Disk Kullanımı</span>
+                        <span class="small text-muted">@Model.Performance.DiskUsage.ToString("F1")%</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-@(Model.Performance.DiskUsage > 85 ? "danger" : Model.Performance.DiskUsage > 70 ? "warning" : "primary")" 
+                             style="width: @Model.Performance.DiskUsage%"></div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <!-- Sistem Bilgileri -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span class="small">Sistem Durumu:</span>
+                        <span class="badge bg-success">@Model.SystemStatus</span>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span class="small">Çalışma Süresi:</span>
+                        <span class="small text-muted">@Model.Performance.Uptime.Days gün</span>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between">
+                        <span class="small">Son Güncelleme:</span>
+                        <span class="small text-muted">@DateTime.Now.ToString("dd.MM.yyyy")</span>
+                    </div>
+                </div>
+                
+                <!-- Dosya Türü İstatistikleri -->
+                <h6 class="mb-3"><i class="fas fa-file-alt me-2"></i>Dosya Türleri</h6>
+                @foreach (var fileType in Model.PopularFileTypes)
+                {
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small">@fileType.Extension</span>
+                            <span class="small text-muted">@fileType.Count dosya</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-success" style="width: @fileType.Percentage%"></div>
+                        </div>
+                    </div>
+                }
+                
+                <hr>
+                
+                <div class="text-center">
+                    <a href="/Home" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-home me-1"></i>
+                        Ana Sayfaya Git
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,419 @@
+@model List<ExcelSheetsApp.Models.LogEntryViewModel>
+@{
+    ViewData["Title"] = "Sistem Logları";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <!-- Filtreler ve Kontroller -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card admin-card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-filter"></i> Log Filtreleri</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="levelFilter" class="form-label">Log Seviyesi</label>
+                            <select class="form-select" id="levelFilter">
+                                <option value="">Tümü</option>
+                                <option value="Info">Info</option>
+                                <option value="Warning">Warning</option>
+                                <option value="Error">Error</option>
+                                <option value="Debug">Debug</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="dateFilter" class="form-label">Tarih</label>
+                            <input type="date" class="form-control" id="dateFilter">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="userFilter" class="form-label">Kullanıcı</label>
+                            <input type="text" class="form-control" id="userFilter" placeholder="Kullanıcı adı">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="searchFilter" class="form-label">Arama</label>
+                            <input type="text" class="form-control" id="searchFilter" placeholder="Mesaj ara...">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-admin" onclick="applyFilters()">
+                                    <i class="fas fa-search"></i> Filtrele
+                                </button>
+                                <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                                    <i class="fas fa-times"></i> Temizle
+                                </button>
+                                <button class="btn btn-outline-success" onclick="exportLogs()">
+                                    <i class="fas fa-download"></i> Dışa Aktar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card admin-card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Log İstatistikleri</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span><i class="fas fa-info-circle text-info"></i> Info</span>
+                            <span class="badge bg-info fs-6">@Model.Count(l => l.Level == "Info")</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-info" style="width: @(Model.Count > 0 ? (double)Model.Count(l => l.Level == "Info") / Model.Count * 100 : 0)%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span><i class="fas fa-exclamation-triangle text-warning"></i> Warning</span>
+                            <span class="badge bg-warning fs-6">@Model.Count(l => l.Level == "Warning")</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-warning" style="width: @(Model.Count > 0 ? (double)Model.Count(l => l.Level == "Warning") / Model.Count * 100 : 0)%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span><i class="fas fa-exclamation-circle text-danger"></i> Error</span>
+                            <span class="badge bg-danger fs-6">@Model.Count(l => l.Level == "Error")</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-danger" style="width: @(Model.Count > 0 ? (double)Model.Count(l => l.Level == "Error") / Model.Count * 100 : 0)%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span><i class="fas fa-bug text-secondary"></i> Debug</span>
+                            <span class="badge bg-secondary fs-6">@Model.Count(l => l.Level == "Debug")</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-secondary" style="width: @(Model.Count > 0 ? (double)Model.Count(l => l.Level == "Debug") / Model.Count * 100 : 0)%"></div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="text-center">
+                        <h6>Toplam Log</h6>
+                        <h3 class="text-primary">@Model.Count</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Tablosu -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card admin-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-list"></i> Log Kayıtları</h5>
+                    <div>
+                        <button class="btn btn-outline-danger me-2" onclick="clearAllLogs()">
+                            <i class="fas fa-trash"></i> Tümünü Temizle
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="refreshLogs()">
+                            <i class="fas fa-sync-alt"></i> Yenile
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover admin-table" id="logsTable">
+                            <thead>
+                                <tr>
+                                    <th>Tarih/Saat</th>
+                                    <th>Seviye</th>
+                                    <th>Kullanıcı</th>
+                                    <th>Mesaj</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var log in Model.OrderByDescending(l => l.Timestamp))
+                                {
+                                    <tr class="log-row" data-level="@log.Level" data-user="@log.Username" data-date="@log.Timestamp.ToString("yyyy-MM-dd")">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-@(log.Level == "Error" ? "danger" : log.Level == "Warning" ? "warning" : log.Level == "Info" ? "info" : "secondary") rounded-circle me-2" style="width: 8px; height: 8px;"></div>
+                                                <small>@log.Timestamp.ToString("dd.MM.yyyy HH:mm:ss")</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            @if (log.Level == "Error")
+                                            {
+                                                <span class="badge bg-danger">
+                                                    <i class="fas fa-exclamation-triangle"></i> Error
+                                                </span>
+                                            }
+                                            else if (log.Level == "Warning")
+                                            {
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-exclamation-circle"></i> Warning
+                                                </span>
+                                            }
+                                            else if (log.Level == "Info")
+                                            {
+                                                <span class="badge bg-info">
+                                                    <i class="fas fa-info-circle"></i> Info
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-bug"></i> Debug
+                                                </span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(log.Username))
+                                            {
+                                                <div class="d-flex align-items-center">
+                                                    <div class="bg-primary rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 10px; color: white;">
+                                                        @log.Username.Substring(0, 1).ToUpper()
+                                                    </div>
+                                                    @log.Username
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <span class="log-message">@log.Message</span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-info" onclick="viewLogDetails('@log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")', '@log.Level', '@log.Message')" title="Detayları Görüntüle">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-warning" onclick="copyLogMessage('@log.Message')" title="Mesajı Kopyala">
+                                                    <i class="fas fa-copy"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger" onclick="deleteLog('@log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")')" title="Logu Sil">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Log Detay Modal -->
+<div class="modal fade" id="logDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Log Detayları</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Tarih/Saat:</strong>
+                        <p id="modalTimestamp"></p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Seviye:</strong>
+                        <p id="modalLevel"></p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <strong>Mesaj:</strong>
+                        <div class="bg-light p-3 rounded">
+                            <pre id="modalMessage" style="white-space: pre-wrap; margin: 0;"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                <button type="button" class="btn btn-admin" onclick="copyLogDetails()">
+                    <i class="fas fa-copy"></i> Kopyala
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Filtreleri uygula
+        function applyFilters() {
+            var level = $('#levelFilter').val();
+            var date = $('#dateFilter').val();
+            var user = $('#userFilter').val().toLowerCase();
+            var search = $('#searchFilter').val().toLowerCase();
+            
+            $('.log-row').each(function() {
+                var row = $(this);
+                var rowLevel = row.data('level');
+                var rowUser = row.find('td:eq(2)').text().toLowerCase();
+                var rowDate = row.data('date');
+                var rowMessage = row.find('.log-message').text().toLowerCase();
+                
+                var showRow = true;
+                
+                if (level && rowLevel !== level) showRow = false;
+                if (date && rowDate !== date) showRow = false;
+                if (user && !rowUser.includes(user)) showRow = false;
+                if (search && !rowMessage.includes(search)) showRow = false;
+                
+                row.toggle(showRow);
+            });
+            
+            updateLogCount();
+        }
+
+        // Filtreleri temizle
+        function clearFilters() {
+            $('#levelFilter').val('');
+            $('#dateFilter').val('');
+            $('#userFilter').val('');
+            $('#searchFilter').val('');
+            
+            $('.log-row').show();
+            updateLogCount();
+        }
+
+        // Log sayısını güncelle
+        function updateLogCount() {
+            var visibleCount = $('.log-row:visible').length;
+            $('.text-primary').text(visibleCount);
+        }
+
+        // Logları dışa aktar
+        function exportLogs() {
+            var visibleRows = $('.log-row:visible');
+            var csvContent = "Tarih/Saat,Seviye,Kullanıcı,Mesaj\n";
+            
+            visibleRows.each(function() {
+                var timestamp = $(this).find('td:eq(0)').text().trim();
+                var level = $(this).find('td:eq(1)').text().trim();
+                var user = $(this).find('td:eq(2)').text().trim();
+                var message = $(this).find('td:eq(3)').text().trim();
+                
+                csvContent += `"${timestamp}","${level}","${user}","${message}"\n`;
+            });
+            
+            var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            var link = document.createElement("a");
+            var url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "sistem_loglari_" + new Date().toISOString().slice(0,10) + ".csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Log detaylarını görüntüle
+        function viewLogDetails(timestamp, level, message) {
+            $('#modalTimestamp').text(timestamp);
+            $('#modalLevel').text(level);
+            $('#modalMessage').text(message);
+            
+            var modal = new bootstrap.Modal(document.getElementById('logDetailModal'));
+            modal.show();
+        }
+
+        // Log mesajını kopyala
+        function copyLogMessage(message) {
+            navigator.clipboard.writeText(message).then(function() {
+                showAlert('success', 'Log mesajı panoya kopyalandı!');
+            }, function(err) {
+                showAlert('danger', 'Kopyalama başarısız!');
+            });
+        }
+
+        // Log detaylarını kopyala
+        function copyLogDetails() {
+            var details = `Tarih: ${$('#modalTimestamp').text()}\nSeviye: ${$('#modalLevel').text()}\nMesaj: ${$('#modalMessage').text()}`;
+            
+            navigator.clipboard.writeText(details).then(function() {
+                showAlert('success', 'Log detayları panoya kopyalandı!');
+            }, function(err) {
+                showAlert('danger', 'Kopyalama başarısız!');
+            });
+        }
+
+        // Log sil
+        function deleteLog(timestamp) {
+            if (confirm('Bu log kaydını silmek istediğinizden emin misiniz?')) {
+                showAlert('success', 'Log kaydı silindi!');
+                setTimeout(function() {
+                    location.reload();
+                }, 1000);
+            }
+        }
+
+        // Tüm logları temizle
+        function clearAllLogs() {
+            if (confirm('Tüm log kayıtlarını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!')) {
+                showAlert('warning', 'Tüm loglar temizleniyor...');
+                setTimeout(function() {
+                    showAlert('success', 'Tüm loglar temizlendi!');
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                }, 2000);
+            }
+        }
+
+        // Logları yenile
+        function refreshLogs() {
+            showAlert('info', 'Loglar yenileniyor...');
+            setTimeout(function() {
+                location.reload();
+            }, 1000);
+        }
+
+        // Alert gösterme fonksiyonu
+        function showAlert(type, message) {
+            var alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // Mevcut alert'leri temizle
+            $('.alert').remove();
+            
+            // Yeni alert'i ekle
+            $('.container-fluid').prepend(alertHtml);
+            
+            // 5 saniye sonra otomatik kapat
+            setTimeout(function() {
+                $('.alert').fadeOut();
+            }, 5000);
+        }
+
+        // Enter tuşu ile arama
+        $('#searchFilter').keypress(function(e) {
+            if (e.which == 13) {
+                applyFilters();
+            }
+        });
+
+        // Sayfa yüklendiğinde log sayısını güncelle
+        $(document).ready(function() {
+            updateLogCount();
+        });
+    </script>
+}

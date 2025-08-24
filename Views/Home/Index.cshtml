@@ -1,0 +1,660 @@
+﻿@model ExcelSheetsApp.Models.HomeViewModel
+@{
+    ViewData["Title"] = "Ana Sayfa";
+}
+
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 60px 0;
+        margin-bottom: 30px;
+        border-radius: 15px;
+    }
+    
+    .step-card {
+        border: none;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        border-radius: 15px;
+        transition: all 0.3s ease;
+        margin-bottom: 25px;
+    }
+    
+    .step-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .step-number {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #4a90e2, #7b68ee);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin-right: 15px;
+    }
+    
+    .card-header-gradient {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-bottom: 2px solid #667eea;
+        font-weight: 600;
+    }
+    
+    .btn-gradient {
+        background: linear-gradient(135deg, #4a90e2, #7b68ee);
+        border: none;
+        color: white;
+        font-weight: 500;
+        padding: 12px 25px;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-gradient:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
+        color: white;
+    }
+    
+    .progress-modern {
+        height: 8px;
+        border-radius: 20px;
+        background: #f1f3f4;
+        overflow: hidden;
+    }
+    
+    .progress-modern .progress-bar {
+        background: linear-gradient(90deg, #4a90e2, #7b68ee);
+        border-radius: 20px;
+    }
+    
+    .data-table-wrapper {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .alert-modern {
+        border: none;
+        border-radius: 15px;
+        border-left: 4px solid #4a90e2;
+    }
+</style>
+
+<!-- Error Message Alert -->
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-warning alert-dismissible fade show alert-modern" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="container-fluid px-4">
+    <!-- Hero Section -->
+    <div class="hero-section text-center">
+        <div class="container">
+            <h1 class="display-5 fw-bold mb-3">
+                <i class="fas fa-file-excel me-3"></i>
+                Excel Otomasyon Sistemi
+            </h1>
+            <p class="lead mb-4">Excel dosyalarınızı yükleyin, işleyin ve analiz edin</p>
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="d-flex justify-content-center align-items-center">
+                        <div class="me-4">
+                            <i class="fas fa-upload fa-2x mb-2"></i>
+                            <div>Yükle</div>
+                        </div>
+                        <i class="fas fa-arrow-right fa-2x mx-3"></i>
+                        <div class="me-4">
+                            <i class="fas fa-cogs fa-2x mb-2"></i>
+                            <div>İşle</div>
+                        </div>
+                        <i class="fas fa-arrow-right fa-2x mx-3"></i>
+                        <div>
+                            <i class="fas fa-chart-bar fa-2x mb-2"></i>
+                            <div>Analiz Et</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-info alert-modern">
+            <i class="fas fa-info-circle me-2"></i>
+            @TempData["Message"]
+        </div>
+    }
+
+    <div class="row">
+        <!-- Excel Template Download -->
+        <div class="col-lg-6 mb-4">
+            <div class="card step-card h-100">
+                <div class="card-header card-header-gradient">
+                    <div class="d-flex align-items-center">
+                        <div class="step-number">1</div>
+                        <h5 class="mb-0">
+                            <i class="fas fa-download me-2"></i>Excel Şablonunu İndirin
+                        </h5>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Excel şablonunu indirip verilerinizi doldurun. Şablon, doğru format için gerekli sütunları içerir.</p>
+                    <div class="d-grid">
+                        <a href="@Url.Action("DownloadExcelTemplate", "Home")" class="btn btn-gradient">
+                            <i class="fas fa-download me-2"></i>Şablonu İndir
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Excel Upload -->
+        <div class="col-lg-6 mb-4">
+            <div class="card step-card h-100">
+                <div class="card-header card-header-gradient">
+                    <div class="d-flex align-items-center">
+                        <div class="step-number">2</div>
+                        <h5 class="mb-0">
+                            <i class="fas fa-upload me-2"></i>Excel Dosyasını Yükleyin
+                        </h5>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form asp-action="UploadExcel" method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="excelFile" class="form-label fw-semibold">Excel Dosyası Seçin</label>
+                            <input type="file" class="form-control" id="excelFile" name="file" accept=".xlsx,.xls" required>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Sadece .xlsx ve .xls dosyaları kabul edilir
+                            </div>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-gradient">
+                                <i class="fas fa-upload me-2"></i>Dosyayı Yükle
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model != null && Model.Sheets.Any())
+    {
+        <!-- Sheet Selection -->
+        <div class="card step-card mb-4">
+            <div class="card-header card-header-gradient">
+                <div class="d-flex align-items-center">
+                    <div class="step-number">3</div>
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>Sayfa Seçin
+                    </h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <form asp-action="LoadSheet" method="post">
+                    <div class="mb-3">
+                        <label for="selectedSheet" class="form-label fw-semibold">Excel Sayfası</label>
+                        <select class="form-select form-select-lg" id="selectedSheet" name="selectedSheet" onchange="this.form.submit()">
+                            @foreach (var sheet in Model.Sheets)
+                            {
+                                <option value="@sheet" selected="@(sheet == Model.SelectedSheet)">📊 @sheet</option>
+                            }
+                        </select>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Sayfa seçildiğinde otomatik olarak yüklenecektir
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-gradient">
+                            <i class="fas fa-refresh me-2"></i>Sayfayı Yükle
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+
+    @if (Model != null && !string.IsNullOrEmpty(Model.SelectedSheet))
+    {
+
+        <!-- Multi-Page Progress -->
+        @if (Model.TotalSheets > 1)
+        {
+            <div class="card step-card mb-4">
+                <div class="card-header card-header-gradient">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tasks me-2"></i>Çoklu Sayfa İlerlemesi
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="progress progress-modern mb-3">
+                        <div class="progress-bar" role="progressbar" style="width: @(Model.CompletedSheets.Count * 100 / Model.TotalSheets)%">
+                            @(Model.CompletedSheets.Count * 100 / Model.TotalSheets)%
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <small class="text-muted">
+                            <i class="fas fa-chart-pie me-1"></i>
+                            @Model.CompletedSheets.Count / @Model.TotalSheets sayfa tamamlandı
+                        </small>
+                        <button class="btn btn-outline-warning btn-sm" onclick="resetMultiPageProgress()">
+                            <i class="fas fa-undo me-1"></i>Sıfırla
+                        </button>
+                    </div>
+                    @if (Model.CompletedSheets.Any())
+                    {
+                        <div class="mt-3">
+                            <small class="text-muted fw-semibold">Tamamlanan sayfalar: </small>
+                            <div class="mt-2">
+                                @foreach (var sheet in Model.CompletedSheets)
+                                {
+                                    <span class="badge bg-success me-1 mb-1">
+                                        <i class="fas fa-check me-1"></i>@sheet
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Data Display -->
+        @if (Model.ExcelData != null && Model.ExcelData.Any())
+        {
+            <div class="data-table-wrapper mb-4">
+                <div class="card-header-gradient p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-table me-2"></i>Excel Verileri
+                        </h5>
+                        <span class="badge bg-primary bg-opacity-20 text-primary px-3 py-2">
+                            <i class="fas fa-list-ol me-1"></i>@Model.ExcelData.Count satır
+                        </span>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="table-responsive">
+                        <table id="excelDataTable" class="table table-striped table-bordered table-hover" style="width:100%">
+                            <thead class="table-dark">
+                                <tr>
+                                    @if (Model.Headers.Any())
+                                    {
+                                        @foreach (var header in Model.Headers)
+                                        {
+                                            <th>@header</th>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <th>Sıra No</th>
+                                        <th>Soru</th>
+                                        <th>Cevap</th>
+                                        <th>Açıklama</th>
+                                        <th>Sütun 5</th>
+                                        <th>Sütun 6</th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var row in Model.ExcelData)
+                                {
+                                    <tr>
+                                        <td>@row.SiraNo</td>
+                                        <td>@row.Soru</td>
+                                        <td>@row.Cevap</td>
+                                        <td>@row.Aciklama</td>
+                                        <td>@row.Sutun5</td>
+                                        <td>@row.Sutun6</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+
+            <!-- Action Buttons -->
+            <div class="card step-card mb-4">
+                <div class="card-header card-header-gradient">
+                    <div class="d-flex align-items-center">
+                        <div class="step-number">4</div>
+                        <h5 class="mb-0">
+                            <i class="fas fa-cogs me-2"></i>İşlem Seçin
+                        </h5>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <!-- JavaScript kod oluşturma butonu kaldırıldı - Selenium kullanıldığı için gerek yok -->
+                        <div class="col-md-4">
+                            <div class="d-grid">
+                                <button class="btn btn-success btn-lg" onclick="startSeleniumFill()">
+                                    <i class="fas fa-robot me-2"></i>
+                                    <div>Selenium Doldur</div>
+                                    <small class="d-block opacity-75">Otomatik işlem</small>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-grid">
+                                <button class="btn btn-warning btn-lg" onclick="closeChrome()">
+                                    <i class="fas fa-window-close me-2"></i>
+                                    <div>Chrome Kapat</div>
+                                    <small class="d-block opacity-75">Tarayıcıyı kapat</small>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    @if (Model.TotalSheets > 1 && !string.IsNullOrEmpty(Model.SelectedSheet) && !Model.CompletedSheets.Contains(Model.SelectedSheet))
+                    {
+                        <div class="text-center mt-4">
+                            <button class="btn btn-outline-primary btn-lg" onclick="markSheetAsCompleted()">
+                                <i class="fas fa-check me-2"></i>Bu Sayfayı Tamamlandı İşaretle
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Selenium Progress Section -->
+        <div id="seleniumProgressSection" class="card step-card mb-4" style="display: none;">
+            <div class="card-header card-header-gradient">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-robot me-2"></i>Selenium İşlem Durumu
+                    </h5>
+                    <button id="cancelSeleniumBtn" class="btn btn-outline-danger btn-sm" onclick="cancelSeleniumOperation()">
+                        <i class="fas fa-times me-1"></i>İptal Et
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="progress progress-modern mb-3">
+                    <div id="seleniumProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                </div>
+                <div id="seleniumStatus" class="text-muted mb-3">
+                    <i class="fas fa-spinner fa-spin me-2"></i>İşlem başlatılıyor...
+                </div>
+                <div id="seleniumLogs" class="bg-dark text-light p-3 rounded" style="max-height: 200px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 12px;"></div>
+            </div>
+        </div>
+
+<!-- Yedek Kod -->
+<div id="seleniumBackupSection" class="card step-card mb-4" style="display: none;">
+    <div class="card-header card-header-gradient">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-robot me-2"></i>Selenium İşlem Durumu (Yedek)
+            </h5>
+        </div>
+    </div>
+    <div class="card-body">
+        <p class="text-muted">Bu bölüm yedek kod olarak eklenmiştir. Ana işlev bozulmaz.</p>
+    </div>
+</div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <script>
+        // SignalR Connection
+        let connection = new signalR.HubConnectionBuilder()
+            .withUrl("/progressHub")
+            .withAutomaticReconnect()
+            .build();
+
+        // DataTable initialization
+        $(document).ready(function() {
+            if ($('#excelDataTable').length) {
+                $('#excelDataTable').DataTable({
+                    language: {
+                        url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
+                    },
+                    pageLength: 25,
+                    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Tümü"]],
+                    responsive: true,
+                    order: [[0, 'asc']],
+                    columnDefs: [
+                        {
+                            targets: [1, 2, 3, 4, 5], // Soru, Cevap, Açıklama, Sütun5, Sütun6
+                            render: function(data, type, row) {
+                                if (type === 'display' && data && data.length > 100) {
+                                    return '<span title="' + data + '">' + data.substring(0, 100) + '...</span>';
+                                }
+                                return data || '';
+                            }
+                        }
+                    ]
+                });
+            }
+        });
+
+
+
+        // Real-time connection management
+        async function startConnection() {
+            try {
+                await connection.start();
+                console.log("SignalR Connected");
+                
+                // Join user group
+                const username = '@Context.Session.GetString("Username")';
+                if (username) {
+                    await connection.invoke("JoinGroup", username);
+                }
+            } catch (err) {
+                console.error("SignalR Connection Error: ", err);
+                setTimeout(startConnection, 5000);
+            }
+        }
+
+        // SignalR Event Handlers
+        connection.on("SeleniumProgress", (progress, status, logs) => {
+            updateSeleniumProgress(progress, status, logs);
+        });
+
+        connection.on("NotificationReceived", (type, message) => {
+            showAlert(type, message);
+        });
+
+        // Start connection when page loads
+        startConnection();
+
+        // JavaScript kod oluşturma fonksiyonu kaldırıldı - Selenium kullanılıyor
+
+        // Selenium ile otomatik doldurma
+        function startSeleniumFill() {
+            if (confirm('Selenium ile otomatik doldurma işlemini başlatmak istiyor musunuz?')) {
+                $('#seleniumProgressSection').show();
+                $('#seleniumProgressBar').css('width', '0%').text('0%');
+                $('#seleniumStatus').text('İşlem başlatılıyor...');
+                
+                $.ajax({
+                    url: '@Url.Action("StartSeleniumFill", "Home")',
+                    type: 'POST',
+                    success: function(response) {
+                        if (response.success) {
+                            showAlert('success', 'Selenium işlemi başlatıldı! Chrome tarayıcısı açılacak ve işlem başlayacak.');
+                            updateProgressBar();
+                        } else {
+                            showAlert('danger', 'Hata: ' + response.message);
+                            $('#seleniumProgressSection').hide();
+                        }
+                    },
+                    error: function() {
+                        showAlert('danger', 'Sunucu hatası oluştu!');
+                        $('#seleniumProgressSection').hide();
+                    }
+                });
+            }
+        }
+
+        // Sayfa tamamlandı işaretleme
+        function markSheetAsCompleted() {
+            $.ajax({
+                url: '@Url.Action("MarkSheetAsCompleted", "Home")',
+                type: 'POST',
+                success: function(response) {
+                    if (response.success) {
+                        showAlert('success', 'Sayfa tamamlandı olarak işaretlendi!');
+                        updateProgressBar();
+                    } else {
+                        showAlert('danger', 'Hata: ' + response.message);
+                    }
+                },
+                error: function() {
+                    showAlert('danger', 'Sunucu hatası oluştu!');
+                }
+            });
+        }
+
+        // Çoklu sayfa ilerlemesini sıfırlama
+        function resetMultiPageProgress() {
+            if (confirm('Çoklu sayfa ilerlemesini sıfırlamak istediğinizden emin misiniz?')) {
+                $.ajax({
+                    url: '@Url.Action("ResetMultiPageProgress", "Home")',
+                    type: 'POST',
+                    success: function(response) {
+                        if (response.success) {
+                            showAlert('success', 'İlerleme sıfırlandı!');
+                            updateProgressBar();
+                        } else {
+                            showAlert('danger', 'Hata: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        showAlert('danger', 'Sunucu hatası oluştu!');
+                    }
+                });
+            }
+        }
+
+        // Chrome'u kapatma
+        function closeChrome() {
+            if (confirm('Chrome tarayıcısını kapatmak istediğinizden emin misiniz?')) {
+                $.ajax({
+                    url: '@Url.Action("CloseChrome", "Home")',
+                    type: 'POST',
+                    success: function(response) {
+                        if (response.success) {
+                            showAlert('success', 'Chrome tarayıcısı kapatıldı!');
+                        } else {
+                            showAlert('danger', 'Hata: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        showAlert('danger', 'Sunucu hatası oluştu!');
+                    }
+                });
+            }
+        }
+
+        // İlerleme çubuğunu güncelleme
+        function updateProgressBar() {
+            $.ajax({
+                url: '@Url.Action("GetProgress", "Home")',
+                type: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        // İlerleme çubuğunu güncelle
+                        var progressPercent = (response.completedSheets.length * 100) / response.totalSheets;
+                        $('.progress-bar').css('width', progressPercent + '%');
+                        
+                        // Tamamlanan sayfa sayısını güncelle
+                        $('.progress-bar').next().text(response.completedSheets.length + ' / ' + response.totalSheets + ' sayfa tamamlandı');
+                        
+                        // Tamamlanan sayfaları güncelle
+                        var completedBadges = '';
+                        response.completedSheets.forEach(function(sheet) {
+                            completedBadges += '<span class="badge bg-success me-1">' + sheet + '</span>';
+                        });
+                        $('.badge.bg-success').parent().html(completedBadges);
+                    }
+                }
+            });
+        }
+
+        // Alert gösterme fonksiyonu
+        function showAlert(type, message) {
+            var alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // Mevcut alert'leri temizle
+            $('.alert').remove();
+            
+            // Yeni alert'i ekle
+            $('.container').first().prepend(alertHtml);
+            
+            // 5 saniye sonra otomatik kapat
+            setTimeout(function() {
+                $('.alert').fadeOut();
+            }, 5000);
+        }
+
+        // Selenium Progress Functions
+        function updateSeleniumProgress(progress, status, logs) {
+            $('#seleniumProgressSection').show();
+            $('#seleniumProgressBar').css('width', progress + '%').text(progress + '%');
+            $('#seleniumStatus').text(status);
+            
+            if (logs && logs.length > 0) {
+                const logsHtml = logs.map(log => `<div>${new Date().toLocaleTimeString()}: ${log}</div>`).join('');
+                $('#seleniumLogs').html(logsHtml);
+                $('#seleniumLogs').scrollTop($('#seleniumLogs')[0].scrollHeight);
+            }
+            
+            if (progress >= 100) {
+                setTimeout(() => {
+                    $('#seleniumProgressSection').hide();
+                    showAlert('success', 'Selenium işlemi tamamlandı!');
+                }, 2000);
+            }
+        }
+
+        // Cancel Selenium Operation
+        function cancelSeleniumOperation() {
+            if (confirm('Selenium işlemini iptal etmek istediğinizden emin misiniz?')) {
+                $.ajax({
+                    url: '@Url.Action("CancelSeleniumOperation", "Home")',
+                    type: 'POST',
+                    success: function(response) {
+                        if (response.success) {
+                            $('#seleniumProgressSection').hide();
+                            showAlert('warning', 'Selenium işlemi iptal edildi.');
+                        } else {
+                            showAlert('danger', 'İptal işlemi başarısız: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        showAlert('danger', 'Sunucu hatası oluştu!');
+                    }
+                });
+            }
+        }
+    </script>
+}

@@ -1,0 +1,37 @@
+# Railway.app için optimize edilmiş Dockerfile
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copy csproj and restore dependencies
+COPY *.csproj ./
+RUN dotnet restore
+
+# Copy everything and build
+COPY . ./
+RUN dotnet publish -c Release -o /app/publish
+
+# Runtime stage - Alpine Linux for smaller size
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS runtime
+
+# Install Chrome dependencies for Alpine
+RUN apk add --no-cache \
+    chromium \
+    chromium-chromedriver \
+    && ln -s /usr/bin/chromium-browser /usr/bin/google-chrome
+
+WORKDIR /app
+COPY --from=build /app/publish .
+
+# Create necessary directories
+RUN mkdir -p /app/wwwroot/uploads
+RUN chmod 755 /app/wwwroot/uploads
+
+# Set environment variables for Railway
+ENV ASPNETCORE_ENVIRONMENT=Production
+ENV DOTNET_RUNNING_IN_CONTAINER=true
+ENV ASPNETCORE_URLS=http://+:$PORT
+
+# Railway otomatik port atar
+EXPOSE $PORT
+
+ENTRYPOINT ["dotnet", "ExcelSheetsApp.dll"]

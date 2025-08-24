@@ -1,0 +1,55 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Giriş Yap";
+    Layout = "~/Views/Shared/_AuthLayout.cshtml";
+}
+
+<div class="auth-card">
+    <div class="auth-header">
+        <div class="icon">
+            <i class="fas fa-shield-alt"></i>
+        </div>
+        <h2>Excel Otomasyon</h2>
+        <p class="mb-0" style="opacity: 0.9;">Güvenli Giriş</p>
+    </div>
+    
+    <div class="auth-body">
+        <form asp-action="Login" method="post">
+            <div asp-validation-summary="All" class="alert alert-danger"></div>
+            
+            <div class="form-floating">
+                <input asp-for="Username" class="form-control" id="floatingUsername" placeholder="Kullanıcı Adı" />
+                <label for="floatingUsername"><i class="fas fa-user me-2"></i>Kullanıcı Adı</label>
+                <span asp-validation-for="Username" class="text-danger small"></span>
+            </div>
+
+            <div class="form-floating">
+                <input asp-for="Password" class="form-control" id="floatingPassword" placeholder="Şifre" />
+                <label for="floatingPassword"><i class="fas fa-lock me-2"></i>Şifre</label>
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+
+            <div class="form-check">
+                <input asp-for="RememberMe" class="form-check-input" id="rememberMe" />
+                <label asp-for="RememberMe" class="form-check-label" for="rememberMe">
+                    <i class="fas fa-remember me-1"></i>Beni Hatırla
+                </label>
+            </div>
+
+            <button type="submit" class="btn-auth">
+                <i class="fas fa-sign-in-alt me-2"></i>Giriş Yap
+            </button>
+        </form>
+    </div>
+    
+    <div class="auth-footer">
+        <p class="mb-0" style="color: #6c757d;">
+            <i class="fas fa-info-circle me-1"></i>
+            Giriş için admin ile iletişime geçiniz
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

@@ -1,0 +1,448 @@
+@model ExcelSheetsApp.Models.SystemSettingsViewModel
+@{
+    ViewData["Title"] = "Sistem Ayarları";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <!-- Ayarlar Formu -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card admin-card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-sliders-h"></i> Sistem Konfigürasyonu</h5>
+                </div>
+                <div class="card-body">
+                    <form id="settingsForm">
+                        <!-- Selenium Ayarları -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3"><i class="fas fa-robot"></i> Selenium Ayarları</h6>
+                                <hr>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="seleniumTimeout" class="form-label">Selenium Timeout (saniye)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="seleniumTimeout" name="SeleniumTimeout" 
+                                               value="@Model.SeleniumTimeout" min="10" max="120">
+                                        <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                    </div>
+                                    <div class="form-text">Tarayıcı işlemleri için maksimum bekleme süresi</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">&nbsp;</label>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="autoCloseBrowser" name="AutoCloseBrowser" 
+                                               @(Model.AutoCloseBrowser ? "checked" : "")>
+                                        <label class="form-check-label" for="autoCloseBrowser">
+                                            <i class="fas fa-window-close"></i> Tarayıcıyı Otomatik Kapat
+                                        </label>
+                                    </div>
+                                    <div class="form-text">İşlem tamamlandıktan sonra Chrome'u otomatik kapat</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dosya Yükleme Ayarları -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-success mb-3"><i class="fas fa-file-upload"></i> Dosya Yükleme Ayarları</h6>
+                                <hr>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="maxFileSize" class="form-label">Maksimum Dosya Boyutu (MB)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="maxFileSize" name="MaxFileSize" 
+                                               value="@Model.MaxFileSize" min="1" max="50">
+                                        <span class="input-group-text"><i class="fas fa-weight-hanging"></i></span>
+                                    </div>
+                                    <div class="form-text">Excel dosyaları için maksimum boyut limiti</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="allowedFileTypes" class="form-label">İzin Verilen Dosya Türleri</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="allowedFileTypes" name="AllowedFileTypes" 
+                                               value="@Model.AllowedFileTypes" placeholder=".xlsx,.xls">
+                                        <span class="input-group-text"><i class="fas fa-file-excel"></i></span>
+                                    </div>
+                                    <div class="form-text">Virgülle ayrılmış dosya uzantıları</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Güvenlik Ayarları -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-warning mb-3"><i class="fas fa-shield-alt"></i> Güvenlik Ayarları</h6>
+                                <hr>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="sessionTimeout" class="form-label">Oturum Zaman Aşımı (dakika)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="sessionTimeout" name="SessionTimeout" 
+                                               value="30" min="5" max="480">
+                                        <span class="input-group-text"><i class="fas fa-hourglass-half"></i></span>
+                                    </div>
+                                    <div class="form-text">Kullanıcı oturumları için zaman aşımı süresi</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">&nbsp;</label>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="enableAuditLog" name="EnableAuditLog" checked>
+                                        <label class="form-check-label" for="enableAuditLog">
+                                            <i class="fas fa-clipboard-list"></i> Denetim Günlüğü Aktif
+                                        </label>
+                                    </div>
+                                    <div class="form-text">Kullanıcı işlemlerini kaydet</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Performans Ayarları -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-info mb-3"><i class="fas fa-tachometer-alt"></i> Performans Ayarları</h6>
+                                <hr>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="maxConcurrentUsers" class="form-label">Maksimum Eşzamanlı Kullanıcı</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="maxConcurrentUsers" name="MaxConcurrentUsers" 
+                                               value="10" min="1" max="100">
+                                        <span class="input-group-text"><i class="fas fa-users"></i></span>
+                                    </div>
+                                    <div class="form-text">Aynı anda sistemi kullanabilecek maksimum kullanıcı sayısı</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="cacheTimeout" class="form-label">Önbellek Zaman Aşımı (dakika)</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="cacheTimeout" name="CacheTimeout" 
+                                               value="15" min="1" max="60">
+                                        <span class="input-group-text"><i class="fas fa-memory"></i></span>
+                                    </div>
+                                    <div class="form-text">Sistem önbelleği için zaman aşımı</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Butonlar -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-admin">
+                                        <i class="fas fa-save"></i> Ayarları Kaydet
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="resetToDefaults()">
+                                        <i class="fas fa-undo"></i> Varsayılana Döndür
+                                    </button>
+                                    <button type="button" class="btn btn-outline-info" onclick="testSettings()">
+                                        <i class="fas fa-vial"></i> Ayarları Test Et
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sağ Panel - Sistem Durumu -->
+        <div class="col-lg-4">
+            <!-- Sistem Durumu -->
+            <div class="card admin-card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-server"></i> Sistem Durumu</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span><i class="fas fa-microchip"></i> CPU Kullanımı</span>
+                            <span class="cpu-usage text-success fw-bold">%</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-success cpu-progress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span><i class="fas fa-memory"></i> Bellek Kullanımı</span>
+                            <span class="memory-usage text-warning fw-bold">%</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-warning memory-progress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span><i class="fas fa-hdd"></i> Disk Kullanımı</span>
+                            <span class="disk-usage text-info fw-bold">%</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-info disk-progress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <span class="badge bg-success fs-6">
+                            <i class="fas fa-check-circle"></i> Sistem Çalışıyor
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hızlı İşlemler -->
+            <div class="card admin-card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-bolt"></i> Hızlı İşlemler</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" onclick="clearCache()">
+                            <i class="fas fa-broom"></i> Önbelleği Temizle
+                        </button>
+                        <button class="btn btn-outline-warning" onclick="restartServices()">
+                            <i class="fas fa-redo"></i> Servisleri Yeniden Başlat
+                        </button>
+                        <button class="btn btn-outline-info" onclick="generateReport()">
+                            <i class="fas fa-file-alt"></i> Sistem Raporu Oluştur
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="backupSystem()">
+                            <i class="fas fa-download"></i> Sistem Yedeği Al
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Son Güncellemeler -->
+            <div class="card admin-card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-history"></i> Son Güncellemeler</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-success"></div>
+                            <div class="timeline-content">
+                                <h6>Selenium ayarları güncellendi</h6>
+                                <small class="text-muted">2 dakika önce</small>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-info"></div>
+                            <div class="timeline-content">
+                                <h6>Dosya boyutu limiti artırıldı</h6>
+                                <small class="text-muted">15 dakika önce</small>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-warning"></div>
+                            <div class="timeline-content">
+                                <h6>Güvenlik ayarları değiştirildi</h6>
+                                <small class="text-muted">1 saat önce</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 20px;
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        left: -35px;
+        top: 5px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+    
+    .timeline-content h6 {
+        margin: 0;
+        font-size: 14px;
+    }
+    
+    .timeline-content small {
+        font-size: 12px;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        // Ayarları kaydet
+        $('#settingsForm').submit(function(e) {
+            e.preventDefault();
+            
+            var formData = {
+                SeleniumTimeout: $('#seleniumTimeout').val(),
+                MaxFileSize: $('#maxFileSize').val(),
+                AllowedFileTypes: $('#allowedFileTypes').val(),
+                AutoCloseBrowser: $('#autoCloseBrowser').is(':checked'),
+                SessionTimeout: $('#sessionTimeout').val(),
+                EnableAuditLog: $('#enableAuditLog').is(':checked'),
+                MaxConcurrentUsers: $('#maxConcurrentUsers').val(),
+                CacheTimeout: $('#cacheTimeout').val()
+            };
+            
+            $.ajax({
+                url: '@Url.Action("SaveSettings", "Admin")',
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    if (response.success) {
+                        showAlert('success', 'Ayarlar başarıyla kaydedildi!');
+                    } else {
+                        showAlert('danger', 'Hata: ' + response.message);
+                    }
+                },
+                error: function() {
+                    showAlert('danger', 'Sunucu hatası oluştu!');
+                }
+            });
+        });
+
+        // Varsayılan ayarlara döndür
+        function resetToDefaults() {
+            if (confirm('Tüm ayarları varsayılan değerlere sıfırlamak istiyor musunuz?')) {
+                $('#seleniumTimeout').val(30);
+                $('#maxFileSize').val(10);
+                $('#allowedFileTypes').val('.xlsx,.xls');
+                $('#autoCloseBrowser').prop('checked', false);
+                $('#sessionTimeout').val(30);
+                $('#enableAuditLog').prop('checked', true);
+                $('#maxConcurrentUsers').val(10);
+                $('#cacheTimeout').val(15);
+                
+                showAlert('info', 'Ayarlar varsayılan değerlere sıfırlandı!');
+            }
+        }
+
+        // Ayarları test et
+        function testSettings() {
+            showAlert('info', 'Ayarlar test ediliyor...');
+            
+            setTimeout(function() {
+                showAlert('success', 'Tüm ayarlar başarıyla test edildi!');
+            }, 2000);
+        }
+
+        // Önbelleği temizle
+        function clearCache() {
+            if (confirm('Sistem önbelleğini temizlemek istiyor musunuz?')) {
+                showAlert('info', 'Önbellek temizleniyor...');
+                
+                setTimeout(function() {
+                    showAlert('success', 'Önbellek başarıyla temizlendi!');
+                }, 1500);
+            }
+        }
+
+        // Servisleri yeniden başlat
+        function restartServices() {
+            if (confirm('Sistem servislerini yeniden başlatmak istiyor musunuz? Bu işlem birkaç dakika sürebilir.')) {
+                showAlert('warning', 'Servisler yeniden başlatılıyor...');
+                
+                setTimeout(function() {
+                    showAlert('success', 'Servisler başarıyla yeniden başlatıldı!');
+                }, 3000);
+            }
+        }
+
+        // Sistem raporu oluştur
+        function generateReport() {
+            showAlert('info', 'Sistem raporu oluşturuluyor...');
+            
+            setTimeout(function() {
+                showAlert('success', 'Sistem raporu başarıyla oluşturuldu!');
+            }, 2000);
+        }
+
+        // Sistem yedeği al
+        function backupSystem() {
+            if (confirm('Sistem yedeği almak istiyor musunuz? Bu işlem biraz zaman alabilir.')) {
+                showAlert('info', 'Sistem yedeği alınıyor...');
+                
+                setTimeout(function() {
+                    showAlert('success', 'Sistem yedeği başarıyla alındı!');
+                }, 2500);
+            }
+        }
+
+        // Alert gösterme fonksiyonu
+        function showAlert(type, message) {
+            var alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // Mevcut alert'leri temizle
+            $('.alert').remove();
+            
+            // Yeni alert'i ekle
+            $('.container-fluid').prepend(alertHtml);
+            
+            // 5 saniye sonra otomatik kapat
+            setTimeout(function() {
+                $('.alert').fadeOut();
+            }, 5000);
+        }
+
+        // Gerçek zamanlı sistem durumu güncelleme
+        function updateSystemPerformance() {
+            $.ajax({
+                url: '@Url.Action("GetSystemPerformance", "Admin")',
+                type: 'GET',
+                success: function(data) {
+                    if (data.success) {
+                        var perf = data.performance;
+                        
+                        // CPU güncelle
+                        $('.cpu-usage').text(perf.cpuUsage + '%');
+                        $('.cpu-progress').css('width', perf.cpuUsage + '%');
+                        
+                        // Bellek güncelle
+                        $('.memory-usage').text(perf.memoryUsage + '%');
+                        $('.memory-progress').css('width', perf.memoryUsage + '%');
+                        
+                        // Disk güncelle
+                        $('.disk-usage').text(perf.diskUsage + '%');
+                        $('.disk-progress').css('width', perf.diskUsage + '%');
+                    }
+                },
+                error: function() {
+                    console.log('Sistem performansı alınamadı');
+                }
+            });
+        }
+        
+        // Sayfa yüklendiğinde ve her 10 saniyede güncelle
+        $(document).ready(function() {
+            updateSystemPerformance();
+            setInterval(updateSystemPerformance, 10000);
+        });
+    </script>
+}

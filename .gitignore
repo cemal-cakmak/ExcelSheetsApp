@@ -1,0 +1,43 @@
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio files
+.vs/
+.vscode/
+*.user
+*.suo
+*.sln.docstates
+
+# Database files
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Log files
+*.log
+
+# Upload directory contents (but keep the directory)
+wwwroot/uploads/*
+!wwwroot/uploads/.gitkeep
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backup files
+backup-*/

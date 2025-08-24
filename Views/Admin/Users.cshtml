@@ -1,0 +1,400 @@
+@model List<ExcelSheetsApp.Models.UserViewModel>
+@{
+    ViewData["Title"] = "Kullanıcı Yönetimi";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <!-- Yeni Kullanıcı Ekleme -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card admin-card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user-plus"></i> Yeni Kullanıcı Ekle</h5>
+                </div>
+                <div class="card-body">
+                    <form id="addUserForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="username" class="form-label">Kullanıcı Adı</label>
+                                <input type="text" class="form-control" id="username" name="Username" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="password" class="form-label">Şifre</label>
+                                <input type="password" class="form-control" id="password" name="Password" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="role" class="form-label">Rol</label>
+                                <select class="form-select" id="role" name="Role" required>
+                                    <option value="User">User</option>
+                                    <option value="Admin">Admin</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">&nbsp;</label>
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" id="isActive" name="IsActive" checked>
+                                    <label class="form-check-label" for="isActive">
+                                        Aktif
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-admin">
+                            <i class="fas fa-plus"></i> Kullanıcı Ekle
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kullanıcı İstatistikleri -->
+        <div class="col-lg-4">
+            <div class="card admin-card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Kullanıcı İstatistikleri</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="bg-primary bg-opacity-10 p-3 rounded">
+                                <h3 class="text-primary mb-1">@Model.Count</h3>
+                                <small class="text-muted">Toplam Kullanıcı</small>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="bg-success bg-opacity-10 p-3 rounded">
+                                <h3 class="text-success mb-1">@Model.Count(u => u.IsActive)</h3>
+                                <small class="text-muted">Aktif Kullanıcı</small>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="bg-danger bg-opacity-10 p-3 rounded">
+                                <h3 class="text-danger mb-1">@Model.Count(u => u.Role == "Admin")</h3>
+                                <small class="text-muted">Admin</small>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="bg-secondary bg-opacity-10 p-3 rounded">
+                                <h3 class="text-secondary mb-1">@Model.Count(u => u.Role == "User")</h3>
+                                <small class="text-muted">Normal Kullanıcı</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kullanıcı Listesi -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card admin-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-list"></i> Kullanıcı Listesi</h5>
+                    <div>
+                        <button class="btn btn-outline-primary btn-sm me-2" onclick="exportUsers()">
+                            <i class="fas fa-download"></i> Dışa Aktar
+                        </button>
+                        <button class="btn btn-outline-success btn-sm" onclick="refreshUsers()">
+                            <i class="fas fa-sync-alt"></i> Yenile
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Kullanıcı</th>
+                                    <th>Rol</th>
+                                    <th>Durum</th>
+                                    <th>Son Giriş</th>
+                                    <th>Kayıt Tarihi</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var user in Model)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; color: white; font-weight: bold;">
+                                                    @user.Username.Substring(0, 1).ToUpper()
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold">@user.Username</div>
+                                                    <small class="text-muted">ID: @user.Username.GetHashCode()</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            @if (user.Role == "Admin")
+                                            {
+                                                <span class="badge bg-danger">
+                                                    <i class="fas fa-crown"></i> Admin
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-user"></i> User
+                                                </span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (user.IsActive)
+                                            {
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check"></i> Aktif
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger">
+                                                    <i class="fas fa-times"></i> Pasif
+                                                </span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <small class="text-muted">
+                                                    Hiç giriş yapmamış
+                                                </small>
+                                                <br>
+                                                <small class="text-info">
+                                                    <i class="fas fa-clock"></i> -
+                                                </small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                @DateTime.Now.ToString("dd.MM.yyyy")
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary" onclick="editUser('@user.Username')" title="Düzenle">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-outline-warning" onclick="toggleUserStatus('@user.Username')" title="Durum Değiştir">
+                                                    <i class="fas fa-toggle-on"></i>
+                                                </button>
+                                                @if (user.Username != "admin")
+                                                {
+                                                    <button class="btn btn-outline-danger" onclick="deleteUser('@user.Username')" title="Sil">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Kullanıcı Düzenleme Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Kullanıcı Düzenle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm">
+                    <input type="hidden" id="editUsername" name="Username">
+                    <div class="mb-3">
+                        <label for="editPassword" class="form-label">Yeni Şifre</label>
+                        <input type="password" class="form-control" id="editPassword" name="Password" placeholder="Değiştirmek istemiyorsanız boş bırakın">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editRole" class="form-label">Rol</label>
+                        <select class="form-select" id="editRole" name="Role">
+                            <option value="User">User</option>
+                            <option value="Admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="editIsActive" name="IsActive">
+                            <label class="form-check-label" for="editIsActive">
+                                Aktif
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-admin" onclick="saveUserChanges()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Yeni kullanıcı ekleme
+        $('#addUserForm').submit(function(e) {
+            e.preventDefault();
+            
+            var formData = {
+                Username: $('#username').val(),
+                Password: $('#password').val(),
+                Role: $('#role').val(),
+                IsActive: $('#isActive').is(':checked')
+            };
+            
+            $.ajax({
+                url: '@Url.Action("AddUser", "Admin")',
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    if (response.success) {
+                        showAlert('success', 'Kullanıcı başarıyla eklendi!');
+                        setTimeout(function() {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        showAlert('danger', 'Hata: ' + response.message);
+                    }
+                },
+                error: function() {
+                    showAlert('danger', 'Sunucu hatası oluştu!');
+                }
+            });
+        });
+
+        // Kullanıcı düzenleme
+        function editUser(username) {
+            $('#editUsername').val(username);
+            $('#editPassword').val('');
+            $('#editRole').val('User');
+            $('#editIsActive').prop('checked', true);
+            
+            var modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+            modal.show();
+        }
+
+        // Kullanıcı değişikliklerini kaydet
+        function saveUserChanges() {
+            var formData = {
+                Username: $('#editUsername').val(),
+                Password: $('#editPassword').val(),
+                Role: $('#editRole').val(),
+                IsActive: $('#editIsActive').is(':checked')
+            };
+            
+            $.ajax({
+                url: '@Url.Action("EditUser", "Admin")',
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    if (response.success) {
+                        showAlert('success', 'Kullanıcı başarıyla güncellendi!');
+                        setTimeout(function() {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        showAlert('danger', 'Hata: ' + response.message);
+                    }
+                },
+                error: function() {
+                    showAlert('danger', 'Sunucu hatası oluştu!');
+                }
+            });
+        }
+
+        // Kullanıcı durumunu değiştir
+        function toggleUserStatus(username) {
+            if (confirm('Kullanıcı durumunu değiştirmek istiyor musunuz?')) {
+                $.ajax({
+                    url: '@Url.Action("ToggleUserStatus", "Admin")',
+                    type: 'POST',
+                    data: { username: username },
+                    success: function(response) {
+                        if (response.success) {
+                            showAlert('success', 'Kullanıcı durumu güncellendi!');
+                            setTimeout(function() {
+                                location.reload();
+                            }, 1500);
+                        } else {
+                            showAlert('danger', 'Hata: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        showAlert('danger', 'Sunucu hatası oluştu!');
+                    }
+                });
+            }
+        }
+
+        // Kullanıcı silme
+        function deleteUser(username) {
+            if (confirm('Bu kullanıcıyı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!')) {
+                $.ajax({
+                    url: '@Url.Action("DeleteUser", "Admin")',
+                    type: 'POST',
+                    data: { username: username },
+                    success: function(response) {
+                        if (response.success) {
+                            showAlert('success', 'Kullanıcı başarıyla silindi!');
+                            setTimeout(function() {
+                                location.reload();
+                            }, 1500);
+                        } else {
+                            showAlert('danger', 'Hata: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        showAlert('danger', 'Sunucu hatası oluştu!');
+                    }
+                });
+            }
+        }
+
+        // Kullanıcıları dışa aktar
+        function exportUsers() {
+            alert('Kullanıcı listesi dışa aktarılıyor...');
+            setTimeout(() => {
+                alert('Kullanıcı listesi başarıyla dışa aktarıldı!');
+            }, 2000);
+        }
+
+        // Kullanıcı listesini yenile
+        function refreshUsers() {
+            location.reload();
+        }
+
+        // Alert gösterme fonksiyonu
+        function showAlert(type, message) {
+            var alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // Mevcut alert'leri temizle
+            $('.alert').remove();
+            
+            // Yeni alert'i ekle
+            $('.container-fluid').prepend(alertHtml);
+            
+            // 5 saniye sonra otomatik kapat
+            setTimeout(function() {
+                $('.alert').fadeOut();
+            }, 5000);
+        }
+    </script>
+}

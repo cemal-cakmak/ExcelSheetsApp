@@ -1,0 +1,282 @@
+@model ExcelSheetsApp.Models.ExcelViewModel
+
+@{
+    ViewData["Title"] = "Excel Dosyası İşlemleri";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-file-excel text-success me-2"></i>
+                        Excel Dosyası İşlemleri
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Dosya Yükleme Bölümü -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="excelFile" class="form-label fw-bold">
+                                    <i class="fas fa-upload me-2"></i>Excel Dosyası Seçin
+                                </label>
+                                <input type="file" class="form-control" id="excelFile" accept=".xlsx,.xls" />
+                                <div class="form-text">Sadece .xlsx ve .xls dosyaları desteklenir.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <button type="button" class="btn btn-primary" id="uploadBtn" disabled>
+                                <i class="fas fa-upload me-2"></i>Dosyayı Yükle
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Yüklenen Dosya Bilgisi -->
+                    <div id="fileInfo" class="alert alert-info d-none">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Yüklenen Dosya:</strong> <span id="fileName"></span>
+                    </div>
+
+                    <!-- Sayfa Seçimi -->
+                    <div id="sheetSelection" class="row mb-4 d-none">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="sheetDropdown" class="form-label fw-bold">
+                                    <i class="fas fa-list me-2"></i>Excel Sayfası Seçin
+                                </label>
+                                <select class="form-select" id="sheetDropdown">
+                                    <option value="">Sayfa seçin...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <button type="button" class="btn btn-success" id="loadSheetBtn" disabled>
+                                <i class="fas fa-table me-2"></i>Sayfayı Yükle
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Hata Mesajları -->
+                    <div id="errorAlert" class="alert alert-danger d-none">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <span id="errorMessage"></span>
+                    </div>
+
+                    <!-- Başarı Mesajları -->
+                    <div id="successAlert" class="alert alert-success d-none">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <span id="successMessage"></span>
+                    </div>
+
+                    <!-- Loading Spinner -->
+                    <div id="loadingSpinner" class="text-center d-none">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Yükleniyor...</span>
+                        </div>
+                        <p class="mt-2">Veriler yükleniyor...</p>
+                    </div>
+
+                    <!-- DataTable -->
+                    <div id="dataTableContainer" class="d-none">
+                        <div class="table-responsive">
+                            <table id="excelDataTable" class="table table-striped table-bordered table-hover">
+                                <thead class="table-dark">
+                                    <!-- Dinamik olarak doldurulacak -->
+                                </thead>
+                                <tbody>
+                                    <!-- Dinamik olarak doldurulacak -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            let dataTable = null;
+
+            // Dosya seçimi değiştiğinde
+            $('#excelFile').change(function() {
+                const file = this.files[0];
+                if (file) {
+                    $('#uploadBtn').prop('disabled', false);
+                } else {
+                    $('#uploadBtn').prop('disabled', true);
+                }
+            });
+
+            // Dosya yükleme
+            $('#uploadBtn').click(function() {
+                const fileInput = $('#excelFile')[0];
+                const file = fileInput.files[0];
+                
+                if (!file) {
+                    showError('Lütfen bir dosya seçin.');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                showLoading(true);
+                hideAlerts();
+
+                $.ajax({
+                    url: '/Excel/UploadFile',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        showLoading(false);
+                        if (response.success) {
+                            showSuccess('Dosya başarıyla yüklendi!');
+                            $('#fileName').text(response.fileName);
+                            $('#fileInfo').removeClass('d-none');
+                            
+                            // Sayfa dropdown'ını doldur
+                            const dropdown = $('#sheetDropdown');
+                            dropdown.empty();
+                            dropdown.append('<option value="">Sayfa seçin...</option>');
+                            
+                            response.sheetNames.forEach(function(sheetName) {
+                                dropdown.append(`<option value="${sheetName}">${sheetName}</option>`);
+                            });
+                            
+                            $('#sheetSelection').removeClass('d-none');
+                        } else {
+                            showError(response.message);
+                        }
+                    },
+                    error: function() {
+                        showLoading(false);
+                        showError('Dosya yüklenirken bir hata oluştu.');
+                    }
+                });
+            });
+
+            // Sayfa seçimi değiştiğinde
+            $('#sheetDropdown').change(function() {
+                const selectedSheet = $(this).val();
+                $('#loadSheetBtn').prop('disabled', !selectedSheet);
+            });
+
+            // Sayfa yükleme
+            $('#loadSheetBtn').click(function() {
+                const selectedSheet = $('#sheetDropdown').val();
+                
+                if (!selectedSheet) {
+                    showError('Lütfen bir sayfa seçin.');
+                    return;
+                }
+
+                showLoading(true);
+                hideAlerts();
+
+                $.ajax({
+                    url: '/Excel/GetSheetData',
+                    type: 'POST',
+                    data: { sheetName: selectedSheet },
+                    success: function(response) {
+                        showLoading(false);
+                        if (response.success) {
+                            showSuccess(`${selectedSheet} sayfası başarıyla yüklendi!`);
+                            displayDataTable(response.columns, response.data);
+                        } else {
+                            showError(response.message);
+                        }
+                    },
+                    error: function() {
+                        showLoading(false);
+                        showError('Sayfa verisi alınırken bir hata oluştu.');
+                    }
+                });
+            });
+
+            // DataTable gösterme
+            function displayDataTable(columns, data) {
+                // Eğer önceden DataTable varsa yok et
+                if (dataTable) {
+                    dataTable.destroy();
+                }
+
+                const table = $('#excelDataTable');
+                const thead = table.find('thead');
+                const tbody = table.find('tbody');
+
+                // Başlıkları oluştur
+                thead.empty();
+                const headerRow = $('<tr></tr>');
+                columns.forEach(function(column) {
+                    headerRow.append(`<th>${column}</th>`);
+                });
+                thead.append(headerRow);
+
+                // Verileri oluştur
+                tbody.empty();
+                data.forEach(function(row) {
+                    const dataRow = $('<tr></tr>');
+                    columns.forEach(function(column) {
+                        dataRow.append(`<td>${row[column] || ''}</td>`);
+                    });
+                    tbody.append(dataRow);
+                });
+
+                // DataTable'ı başlat
+                dataTable = table.DataTable({
+                    responsive: true,
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
+                    },
+                    pageLength: 25,
+                    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Tümü"]],
+                    dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                         '<"row"<"col-sm-12"tr>>' +
+                         '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                    buttons: [
+                        'copy', 'csv', 'excel', 'pdf', 'print'
+                    ]
+                });
+
+                $('#dataTableContainer').removeClass('d-none');
+            }
+
+            // Yardımcı fonksiyonlar
+            function showLoading(show) {
+                if (show) {
+                    $('#loadingSpinner').removeClass('d-none');
+                } else {
+                    $('#loadingSpinner').addClass('d-none');
+                }
+            }
+
+            function showError(message) {
+                $('#errorMessage').text(message);
+                $('#errorAlert').removeClass('d-none');
+            }
+
+            function showSuccess(message) {
+                $('#successMessage').text(message);
+                $('#successAlert').removeClass('d-none');
+            }
+
+            function hideAlerts() {
+                $('#errorAlert').addClass('d-none');
+                $('#successAlert').addClass('d-none');
+            }
+        });
+    </script>
+}
