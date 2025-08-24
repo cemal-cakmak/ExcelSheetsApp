@@ -92,6 +92,9 @@ app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Health check endpoint for Railway
+app.MapGet("/health", () => "OK");
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Account}/{action=Login}/{id?}");
@@ -99,9 +102,13 @@ app.MapControllerRoute(
 // Map SignalR Hub
 app.MapHub<ProgressHub>("/progressHub");
 
-// Railway port configuration
-var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
-app.Urls.Add($"http://0.0.0.0:{port}");
+// Railway port configuration - Daha güvenli
+if (!app.Environment.IsDevelopment())
+{
+    var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+    app.Urls.Clear();
+    app.Urls.Add($"http://0.0.0.0:{port}");
+}
 
 app.Run();
 
