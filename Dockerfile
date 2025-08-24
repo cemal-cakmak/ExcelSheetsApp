@@ -1,28 +1,18 @@
-# Railway için minimal ve basit Dockerfile
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+# Railway için ultra basit Dockerfile
+FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
 WORKDIR /src
-
-# Copy csproj and restore dependencies
-COPY *.csproj ./
+COPY . .
 RUN dotnet restore
+RUN dotnet publish -c Release -o /app
 
-# Copy everything and build
-COPY . ./
-RUN dotnet publish -c Release -o /app/publish
-
-# Runtime stage - En minimal hali
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine
 WORKDIR /app
-COPY --from=build /app/publish .
+COPY --from=build /app .
 
-# Create uploads directory
-RUN mkdir -p wwwroot/uploads
-
-# Railway için environment variables
+# Railway için gerekli
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ASPNETCORE_URLS=http://+:$PORT
 
 EXPOSE $PORT
 
-# Verbose çıktı için
 ENTRYPOINT ["dotnet", "ExcelSheetsApp.dll"]
