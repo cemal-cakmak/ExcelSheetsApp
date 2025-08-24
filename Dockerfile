@@ -26,9 +26,7 @@ COPY --from=build /app/publish .
 
 # Create necessary directories
 RUN mkdir -p /app/wwwroot/uploads
-RUN mkdir -p /app/data
 RUN chmod 755 /app/wwwroot/uploads
-RUN chmod 755 /app/data
 
 # Set environment variables for Railway
 ENV ASPNETCORE_ENVIRONMENT=Production

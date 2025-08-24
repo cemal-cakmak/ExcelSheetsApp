@@ -10,19 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Environment variables are automatically loaded in Railway
 
 // Add services to the container.
-// Ensure database directory exists for Railway
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-if (builder.Environment.IsProduction() && connectionString!.Contains("/app/data/"))
-{
-    var dataDir = "/app/data";
-    if (!Directory.Exists(dataDir))
-    {
-        Directory.CreateDirectory(dataDir);
-    }
-}
-
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(connectionString));
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => 
 {
@@ -102,13 +91,10 @@ app.MapControllerRoute(
 // Map SignalR Hub
 app.MapHub<ProgressHub>("/progressHub");
 
-// Railway port configuration - Daha güvenli
-if (!app.Environment.IsDevelopment())
-{
-    var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
-    app.Urls.Clear();
-    app.Urls.Add($"http://0.0.0.0:{port}");
-}
+// Railway port configuration - Simplified
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+app.Urls.Clear();
+app.Urls.Add($"http://0.0.0.0:{port}");
 
 app.Run();
 
