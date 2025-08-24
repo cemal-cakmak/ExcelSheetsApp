@@ -48,12 +48,14 @@ namespace ExcelSheetsApp.Services
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<AdminService> _logger;
+        private readonly IServiceProvider _serviceProvider;
 
-        public AdminService(ApplicationDbContext context, UserManager<ApplicationUser> userManager, ILogger<AdminService> logger)
+        public AdminService(ApplicationDbContext context, UserManager<ApplicationUser> userManager, ILogger<AdminService> logger, IServiceProvider serviceProvider)
         {
             _context = context;
             _userManager = userManager;
             _logger = logger;
+            _serviceProvider = serviceProvider;
         }
 
         public async Task<AdminDashboardViewModel> GetDashboardDataAsync()
@@ -202,36 +204,58 @@ namespace ExcelSheetsApp.Services
 
         public async Task LogActivityAsync(string action, string username, string fileName = "", string status = "Success", double? processingTime = null, string details = "")
         {
-            try
+            // Background task için yeni scope oluştur
+            _ = Task.Run(async () =>
             {
-                var log = new ActivityLog
+                try
                 {
-                    Action = action,
-                    Username = username,
-                    FileName = fileName,
-                    Status = status,
-                    ProcessingTimeSeconds = processingTime,
-                    Details = details,
-                    FileExtension = string.IsNullOrEmpty(fileName) ? "" : Path.GetExtension(fileName),
-                    Timestamp = DateTime.Now
-                };
+                    using var scope = _serviceProvider.CreateScope();
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    
+                    var log = new ActivityLog
+                    {
+                        Action = action,
+                        Username = username,
+                        FileName = fileName,
+                        Status = status,
+                        ProcessingTimeSeconds = processingTime,
+                        Details = details,
+                        FileExtension = string.IsNullOrEmpty(fileName) ? "" : Path.GetExtension(fileName),
+                        Timestamp = DateTime.Now
+                    };
 
-                _context.ActivityLogs.Add(log);
-                await _context.SaveChangesAsync();
+                    context.ActivityLogs.Add(log);
+                    await context.SaveChangesAsync();
 
-                // Dosya türü istatistiklerini güncelle
-                if (!string.IsNullOrEmpty(log.FileExtension))
-                {
-                    await IncrementFileTypeStatisticAsync(log.FileExtension, 0);
+                    // Dosya türü istatistiklerini güncelle  
+                    if (!string.IsNullOrEmpty(log.FileExtension))
+                    {
+                        var fileTypeStat = await context.FileTypeStatistics
+                            .FirstOrDefaultAsync(f => f.Extension == log.FileExtension);
+                        
+                        if (fileTypeStat == null)
+                        {
+                            fileTypeStat = new FileTypeStatistic
+                            {
+                                Extension = log.FileExtension,
+                                Count = 1,
+                                TotalSizeBytes = 0
+                            };
+                            context.FileTypeStatistics.Add(fileTypeStat);
+                        }
+                        else
+                        {
+                            fileTypeStat.Count++;
+                        }
+                        
+                        await context.SaveChangesAsync();
+                    }
                 }
-
-                // Günlük istatistikleri güncelle
-                await UpdateDailyStatisticsAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Activity log kaydedilemedi: {Action} - {Username}", action, username);
-            }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Activity log error: {ex.Message}");
+                }
+            });
         }
 
         public async Task<List<ApplicationUser>> GetAllUsersAsync()
