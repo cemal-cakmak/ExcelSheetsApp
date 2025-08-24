@@ -14,8 +14,13 @@ RUN dotnet publish -c Release -o /app
 FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine
 WORKDIR /app
 
-# Install ICU for globalization
-RUN apk add --no-cache icu-libs
+# Install ICU for globalization and Chrome dependencies
+RUN apk add --no-cache \
+    icu-libs \
+    chromium \
+    chromium-chromedriver \
+    && ln -s /usr/bin/chromium-browser /usr/bin/google-chrome
+
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 
 # Copy published app

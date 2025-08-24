@@ -18,10 +18,10 @@ namespace ExcelSheetsApp.Controllers;
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
-    private readonly SeleniumService? _seleniumService;
+    private readonly SeleniumService _seleniumService;
     private readonly IAdminService _adminService;
 
-    public HomeController(ILogger<HomeController> logger, IAdminService adminService, SeleniumService? seleniumService = null)
+    public HomeController(ILogger<HomeController> logger, IAdminService adminService, SeleniumService seleniumService)
     {
         _logger = logger;
         _seleniumService = seleniumService;
@@ -545,10 +545,6 @@ public class HomeController : Controller
             // İşlem başladığını bildir
             await hubContext.Clients.Group(username ?? "default").SendAsync("SeleniumProgress", 10, "Selenium işlemi başlatılıyor...", new List<string> { "Chrome tarayıcısı açılıyor..." });
             
-            if (_seleniumService == null)
-            {
-                return Json(new { success = false, message = "Selenium servis kullanılamıyor." });
-            }
             var result = await _seleniumService.FillWebsiteDataAsync(sessionFilePath, selectedSheet, websiteUrl);
 
             if (result.IsSuccess)

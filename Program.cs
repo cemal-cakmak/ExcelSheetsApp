@@ -37,8 +37,8 @@ builder.Services.AddSession(options =>
 // Add SignalR
 builder.Services.AddSignalR();
 
-// Add Selenium Service - Temporarily disabled for Railway
-// builder.Services.AddScoped<SeleniumService>();
+// Add Selenium Service
+builder.Services.AddScoped<SeleniumService>();
 
 // Add Excel Service
 builder.Services.AddScoped<IExcelService, ExcelService>();

@@ -54,8 +54,27 @@ public class SeleniumService
                 if (_driverInstance == null)
                 {
                     result.Logs.Add("Yeni Chrome tarayıcısı başlatılıyor...");
-                    _driverInstance = new ChromeDriver();
-                    _driverInstance.Manage().Window.Maximize();
+                    
+                    // Railway için Chrome seçenekleri
+                    var options = new ChromeOptions();
+                    options.AddArgument("--headless"); // Railway'de GUI yok
+                    options.AddArgument("--no-sandbox");
+                    options.AddArgument("--disable-dev-shm-usage");
+                    options.AddArgument("--disable-gpu");
+                    options.AddArgument("--remote-debugging-port=9222");
+                    options.AddArgument("--window-size=1920,1080");
+                    options.AddArgument("--disable-extensions");
+                    options.AddArgument("--disable-plugins");
+                    options.AddArgument("--disable-web-security");
+                    options.AddArgument("--disable-features=VizDisplayCompositor");
+                    options.AddArgument("--disable-background-timer-throttling");
+                    
+                    // Railway Alpine Linux için binary path
+                    options.BinaryLocation = "/usr/bin/chromium-browser";
+                    
+                    _driverInstance = new ChromeDriver(options);
+                    _driverInstance.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(3);
+                    _driverInstance.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(30);
                     
                     result.Logs.Add("Website'e gidiliyor...");
                     _driverInstance.Navigate().GoToUrl(websiteUrl);
