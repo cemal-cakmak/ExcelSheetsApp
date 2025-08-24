@@ -14,12 +14,14 @@ RUN dotnet publish -c Release -o /app
 FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine
 WORKDIR /app
 
-# Install ICU for globalization and Chrome dependencies
+# Install ICU and Chrome for Railway
 RUN apk add --no-cache \
     icu-libs \
     chromium \
     chromium-chromedriver \
-    && ln -s /usr/bin/chromium-browser /usr/bin/google-chrome
+    xvfb \
+    && ln -s /usr/bin/chromium-browser /usr/bin/google-chrome \
+    && ln -s /usr/bin/chromedriver /usr/local/bin/chromedriver
 
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 

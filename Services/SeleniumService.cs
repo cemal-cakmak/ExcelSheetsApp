@@ -35,6 +35,23 @@ public class SeleniumService
             var excelData = await ReadExcelDataAsync(excelFilePath, selectedSheet);
             result.TotalCount = excelData.Count;
             result.Logs.Add($"{excelData.Count} soru bulundu.");
+            
+            // Railway'de Chrome test et
+            if (Environment.OSVersion.Platform == PlatformID.Unix)
+            {
+                result.Logs.Add("🐧 Linux ortamı tespit edildi (Railway)");
+                result.Logs.Add("🔧 Chrome binary kontrolü yapılıyor...");
+                
+                if (!System.IO.File.Exists("/usr/bin/chromium-browser"))
+                {
+                    result.Logs.Add("❌ Chrome binary bulunamadı!");
+                    throw new Exception("Chrome binary Railway'de mevcut değil");
+                }
+                else
+                {
+                    result.Logs.Add("✅ Chrome binary bulundu: /usr/bin/chromium-browser");
+                }
+            }
 
             // Sayfa numarasını belirle (1'den başlayarak)
             var sheetIndex = await GetSheetIndexAsync(excelFilePath, selectedSheet);
@@ -55,26 +72,47 @@ public class SeleniumService
                 {
                     result.Logs.Add("Yeni Chrome tarayıcısı başlatılıyor...");
                     
-                    // Railway için Chrome seçenekleri
-                    var options = new ChromeOptions();
-                    options.AddArgument("--headless"); // Railway'de GUI yok
-                    options.AddArgument("--no-sandbox");
-                    options.AddArgument("--disable-dev-shm-usage");
-                    options.AddArgument("--disable-gpu");
-                    options.AddArgument("--remote-debugging-port=9222");
-                    options.AddArgument("--window-size=1920,1080");
-                    options.AddArgument("--disable-extensions");
-                    options.AddArgument("--disable-plugins");
-                    options.AddArgument("--disable-web-security");
-                    options.AddArgument("--disable-features=VizDisplayCompositor");
-                    options.AddArgument("--disable-background-timer-throttling");
-                    
-                    // Railway Alpine Linux için binary path
-                    options.BinaryLocation = "/usr/bin/chromium-browser";
-                    
-                    _driverInstance = new ChromeDriver(options);
-                    _driverInstance.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(3);
-                    _driverInstance.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(30);
+                    try
+                    {
+                        // Railway için Chrome seçenekleri
+                        var options = new ChromeOptions();
+                        options.AddArgument("--headless");
+                        options.AddArgument("--no-sandbox");
+                        options.AddArgument("--disable-dev-shm-usage");
+                        options.AddArgument("--disable-gpu");
+                        options.AddArgument("--disable-software-rasterizer");
+                        options.AddArgument("--disable-background-timer-throttling");
+                        options.AddArgument("--disable-backgrounding-occluded-windows");
+                        options.AddArgument("--disable-renderer-backgrounding");
+                        options.AddArgument("--disable-features=TranslateUI");
+                        options.AddArgument("--disable-extensions");
+                        options.AddArgument("--disable-default-apps");
+                        options.AddArgument("--disable-web-security");
+                        options.AddArgument("--allow-running-insecure-content");
+                        options.AddArgument("--window-size=1920,1080");
+                        options.AddArgument("--remote-debugging-port=9222");
+                        
+                        // Alpine Linux için binary paths
+                        if (Environment.OSVersion.Platform == PlatformID.Unix)
+                        {
+                            // Railway/Alpine Linux
+                            options.BinaryLocation = "/usr/bin/chromium-browser";
+                            result.Logs.Add("Alpine Linux Chrome binary kullanılıyor...");
+                        }
+                        
+                        result.Logs.Add("ChromeDriver oluşturuluyor...");
+                        _driverInstance = new ChromeDriver(options);
+                        
+                        _driverInstance.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(5);
+                        _driverInstance.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(60);
+                        
+                        result.Logs.Add("✅ Chrome başarıyla başlatıldı!");
+                    }
+                    catch (Exception ex)
+                    {
+                        result.Logs.Add($"❌ Chrome başlatma hatası: {ex.Message}");
+                        throw new Exception($"Chrome başlatılamadı: {ex.Message}", ex);
+                    }
                     
                     result.Logs.Add("Website'e gidiliyor...");
                     _driverInstance.Navigate().GoToUrl(websiteUrl);
