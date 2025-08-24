@@ -7,11 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load environment variables from .env file if exists
-if (File.Exists(".env"))
-{
-    DotNetEnv.Env.Load();
-}
+// Environment variables are automatically loaded in Railway
 
 // Add services to the container.
 // Ensure database directory exists for Railway
