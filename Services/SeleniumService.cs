@@ -117,11 +117,20 @@ public class SeleniumService
                     result.Logs.Add("Website'e gidiliyor...");
                     _driverInstance.Navigate().GoToUrl(websiteUrl);
                     
-                    result.Status = "Lütfen manuel olarak giriş yapın ve form sayfasına gidin...";
-                    result.Logs.Add("Kullanıcı giriş yapması bekleniyor...");
-                    result.Logs.Add("⚠️ ÖNEMLİ: Giriş yaptıktan sonra form sayfasına gittiğinizden emin olun!");
-                    
-                    isNewDriver = true;
+                    // Headless mode için otomatik işlem
+                    if (Environment.OSVersion.Platform == PlatformID.Unix)
+                    {
+                        result.Status = "Headless modda otomatik form doldurma başlatılıyor...";
+                        result.Logs.Add("🤖 Railway headless mode - Otomatik işlem başlatılıyor...");
+                        isNewDriver = true;
+                    }
+                    else
+                    {
+                        result.Status = "Lütfen manuel olarak giriş yapın ve form sayfasına gidin...";
+                        result.Logs.Add("Kullanıcı giriş yapması bekleniyor...");
+                        result.Logs.Add("⚠️ ÖNEMLİ: Giriş yaptıktan sonra form sayfasına gittiğinizden emin olun!");
+                        isNewDriver = true;
+                    }
                 }
                 else
                 {
@@ -131,20 +140,46 @@ public class SeleniumService
                 driver = _driverInstance;
             }
 
-            // Yeni driver ise kullanıcının giriş yapmasını bekle
+            // Yeni driver ise platformuna göre işlem yap
             if (isNewDriver)
             {
-                await Task.Delay(45000); // 45 saniye bekle
+                if (Environment.OSVersion.Platform == PlatformID.Unix)
+                {
+                    // Railway headless - kısa bekleme sonra direkt devam
+                    result.Logs.Add("🚀 Headless mode - 5 saniye sayfa yüklenmesi bekleniyor...");
+                    await Task.Delay(5000);
+                }
+                else
+                {
+                    // Lokal - manuel kullanıcı işlemi bekle
+                    await Task.Delay(45000); // 45 saniye bekle
+                }
             }
 
-            // Kullanıcıya hangi sayfayı açması gerektiğini söyle
+            // Platform'a göre sayfa yönetimi
             var targetPageUrl = GetTargetPageUrl(pageNumber);
-            result.Status = $"Lütfen web sitesinde '{GetPageName(pageNumber)}' sayfasını açın...";
-            result.Logs.Add($"📋 Şimdi web sitesinde '{GetPageName(pageNumber)}' sayfasını açmanız gerekiyor.");
-            result.Logs.Add($"🔗 Hedef URL: {targetPageUrl}");
-            result.Logs.Add("⏳ Sayfa açıldıktan sonra 10 saniye bekleyeceğim...");
             
-            await Task.Delay(10000); // 10 saniye bekle
+            if (Environment.OSVersion.Platform == PlatformID.Unix)
+            {
+                // Railway headless - direkt form sayfasına git
+                result.Status = "Headless modda form sayfasına gidiliyor...";
+                result.Logs.Add($"🤖 Otomatik olarak form sayfasına gidiliyor: {GetPageName(pageNumber)}");
+                result.Logs.Add($"🔗 Hedef URL: {targetPageUrl}");
+                
+                // Direkt form sayfasına git
+                driver.Navigate().GoToUrl(targetPageUrl);
+                result.Logs.Add("✅ Form sayfası yüklendi, 3 saniye bekleniyor...");
+                await Task.Delay(3000);
+            }
+            else
+            {
+                // Lokal - kullanıcı manuel açsın
+                result.Status = $"Lütfen web sitesinde '{GetPageName(pageNumber)}' sayfasını açın...";
+                result.Logs.Add($"📋 Şimdi web sitesinde '{GetPageName(pageNumber)}' sayfasını açmanız gerekiyor.");
+                result.Logs.Add($"🔗 Hedef URL: {targetPageUrl}");
+                result.Logs.Add("⏳ Sayfa açıldıktan sonra 10 saniye bekleyeceğim...");
+                await Task.Delay(10000); // 10 saniye bekle
+            }
 
             result.Status = "Form dolduruluyor...";
             result.Logs.Add("Form doldurma işlemi başlatılıyor...");
