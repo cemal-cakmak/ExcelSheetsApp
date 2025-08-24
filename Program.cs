@@ -7,6 +7,11 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Debug logging for Railway
+Console.WriteLine("🚀 ExcelSheetsApp Starting...");
+Console.WriteLine($"Environment: {builder.Environment.EnvironmentName}");
+Console.WriteLine($"PORT: {Environment.GetEnvironmentVariable("PORT")}");
+
 // Environment variables are automatically loaded in Railway
 
 // Add services to the container.
@@ -36,8 +41,8 @@ builder.Services.AddSession(options =>
 // Add SignalR
 builder.Services.AddSignalR();
 
-// Add Selenium Service
-builder.Services.AddScoped<SeleniumService>();
+// Add Selenium Service - Temporarily disabled for Railway
+// builder.Services.AddScoped<SeleniumService>();
 
 // Add Excel Service
 builder.Services.AddScoped<IExcelService, ExcelService>();
@@ -91,10 +96,14 @@ app.MapControllerRoute(
 // Map SignalR Hub
 app.MapHub<ProgressHub>("/progressHub");
 
-// Railway port configuration - Simplified
+// Railway port configuration - Ultra simple
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+Console.WriteLine($"🌐 Starting on port: {port}");
 app.Urls.Clear();
 app.Urls.Add($"http://0.0.0.0:{port}");
+
+Console.WriteLine("✅ ExcelSheetsApp configuration completed!");
+Console.WriteLine("🏁 Starting web application...");
 
 app.Run();
 
