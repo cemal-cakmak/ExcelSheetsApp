@@ -497,32 +497,39 @@ namespace ExcelSheetsApp.Services
 
         public async Task IncrementFileTypeStatisticAsync(string extension, long fileSize)
         {
-            try
+            // Background task için yeni scope oluştur
+            _ = Task.Run(async () =>
             {
-                var stat = await _context.FileTypeStatistics
-                    .FirstOrDefaultAsync(f => f.Extension == extension.ToLower());
-
-                if (stat == null)
+                try
                 {
-                    stat = new FileTypeStatistic
+                    using var scope = _serviceProvider.CreateScope();
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    
+                    var stat = await context.FileTypeStatistics
+                        .FirstOrDefaultAsync(f => f.Extension == extension.ToLower());
+
+                    if (stat == null)
                     {
-                        Extension = extension.ToLower(),
-                        Count = 0,
-                        TotalSizeBytes = 0
-                    };
-                    _context.FileTypeStatistics.Add(stat);
+                        stat = new FileTypeStatistic
+                        {
+                            Extension = extension.ToLower(),
+                            Count = 0,
+                            TotalSizeBytes = 0
+                        };
+                        context.FileTypeStatistics.Add(stat);
+                    }
+
+                    stat.Count++;
+                    stat.TotalSizeBytes += fileSize;
+                    stat.LastUpdated = DateTime.Now;
+
+                    await context.SaveChangesAsync();
                 }
-
-                stat.Count++;
-                stat.TotalSizeBytes += fileSize;
-                stat.LastUpdated = DateTime.Now;
-
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Dosya türü istatistiği güncellenemedi: {Extension}", extension);
-            }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"File type statistic error: {ex.Message}");
+                }
+            });
         }
 
         private string GetIconForAction(string action)
